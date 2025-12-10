@@ -47,47 +47,46 @@ class AgentFactory:
         return """
 Analyze the provided Java AWS Lambda codebase. Your goal is to transform this into a deployment-ready Azure Function App project using Java (Java 17 or 21).
 
-IMPORTANT: Only convert production Lambda handler files. Do NOT convert test files.
+IMPORTANT: You are processing a full project conversion. You will encounter Lambda Handlers, Unit Tests, Data Models, and Utility classes.
 
 **CRITICAL: IN-PLACE CONVERSION**
 1.  **File Preservation**: Convert each file in-place, maintaining the EXACT same file path and name.
-2.  **Logic Migration**: MIGRATE AWS Lambda logic to Azure Function logic within the same file.
-3.  **Structure Preservation**: Keep the original package structure and class names.
+2.  **Structure Preservation**: Keep the original package structure and class names.
+
+**Handling Different File Types**:
+
+**1. Lambda Handlers (Entry Points)**
+   - Convert to **Azure Functions** with `@FunctionName` annotation.
+   - Map Triggers:
+     - API Gateway -> `@HttpTrigger`
+     - SQS -> `@QueueTrigger`
+     - S3 -> `@BlobTrigger`
+     - Scheduled -> `@TimerTrigger`
+   - Replace Context with `ExecutionContext`.
+
+**2. Unit Tests (src/test/java)**
+   - **KEEP as Tests**. Do NOT convert them to Functions.
+   - Update assertions and mocks to match Azure SDKs.
+   - If using LocalStack or AWS mocks, replace with Azure equivalents or generic mocks.
+
+**3. Models / Utilities / Shared Code**
+   - Keep the logic but **replace AWS SDK dependencies** with Azure SDKs.
+   - Example: If a utility uploads to S3, change it to upload to Azure Blob Storage.
 
 **Service Mapping**:
-*   **AWS Lambda Handler** -> **Azure Function with @FunctionName annotation**
 *   **EC2** -> **Azure Virtual Machines** (Use `com.azure.resourcemanager:azure-resourcemanager-compute`)
 *   **S3** -> **Azure Blob Storage** (Use `com.azure:azure-storage-blob`)
 *   **DynamoDB** -> **Azure Cosmos DB** (Use `com.azure:azure-cosmos`)
 *   **SQS** -> **Azure Queue Storage** (Use `com.azure:azure-storage-queue`)
-
-**Concept Mapping**:
-*   **Lambda Context** -> **ExecutionContext**
-*   **APIGatewayProxyRequestEvent** -> **HttpRequestMessage<Optional<String>>**
-*   **APIGatewayProxyResponseEvent** -> **HttpResponseMessage**
-*   **AMI IDs** -> **Azure Image References**
-*   **Instance Types** -> **Azure VM Sizes**
-*   **Spot Instances** -> **Azure Spot VMs** (`Priority = VirtualMachinePriority.SPOT`)
 
 **SDK Usage**:
 *   Remove `aws-java-sdk-*` dependencies.
 *   Add `com.azure:azure-identity`, `com.azure.resourcemanager:azure-resourcemanager`, etc.
 *   Add `com.microsoft.azure.functions:azure-functions-java-library`
 
-**Conversion Instructions**:
-1. Convert the Lambda handler class to an Azure Function class
-2. Replace AWS SDK calls with Azure SDK equivalents
-3. Update method signatures to use Azure Function annotations (@FunctionName, @HttpTrigger, etc.)
-4. Maintain the same file path and class name
-5. Keep all business logic in the same file
-
-You must also generate configuration files:
-*   `pom.xml`: Complete Maven project file with Azure Functions dependencies
-*   `host.json`: Azure Functions host configuration
-*   `local.settings.json`: Local development settings
-
-Use the `file_writer` tool to write each file to the local file system.
-Do not just output code snippets; write the full file contents.
+**Output**:
+*   Use the `file_writer` tool to write the transformed file content.
+*   Also generate/update configuration files (`pom.xml`, `host.json`, `local.settings.json`) when asked.
 """
     
     @staticmethod
@@ -96,49 +95,46 @@ Do not just output code snippets; write the full file contents.
         return """
 Analyze the provided C# AWS Lambda codebase. Your goal is to transform this into a deployment-ready Azure Function App project using C# (.NET 6 or .NET 8).
 
-IMPORTANT: Only convert production Lambda handler files. Do NOT convert test files.
+IMPORTANT: You are processing a full project conversion. You will encounter Lambda Functions,Unit Tests, Data Models, and Utility classes.
 
 **CRITICAL: IN-PLACE CONVERSION**
 1.  **File Preservation**: Convert each file in-place, maintaining the EXACT same file path and name.
-2.  **Logic Migration**: MIGRATE AWS Lambda logic to Azure Function logic within the same file.
-3.  **Structure Preservation**: Keep the original namespace and class names.
+2.  **Structure Preservation**: Keep the original namespace and class names.
+
+**Handling Different File Types**:
+
+**1. Lambda Functions (Entry Points)**
+   - Convert to **Azure Functions** with `[FunctionName]` attribute.
+   - Map Triggers:
+     - API Gateway -> `[HttpTrigger]`
+     - SQS -> `[QueueTrigger]`
+     - S3 -> `[BlobTrigger]`
+     - Scheduled -> `[TimerTrigger]`
+   - Replace `ILambdaContext` with `ExecutionContext`.
+
+**2. Unit Tests (test projects)**
+   - **KEEP as Tests**. Do NOT convert them to Functions.
+   - Update assertions and mocks to match Azure SDKs.
+   - Ensure they target the updated Azure implementation.
+
+**3. Models / Utilities / Shared Code**
+   - Keep the logic but **replace AWS SDK dependencies** with Azure SDKs.
+   - Example: If a repository uses DynamoDB, change it to use Cosmos DB.
 
 **Service Mapping**:
-*   **AWS Lambda Function** -> **Azure Function with [FunctionName] attribute**
 *   **EC2** -> **Azure Virtual Machines** (Use `Azure.ResourceManager.Compute`)
 *   **S3** -> **Azure Blob Storage** (Use `Azure.Storage.Blobs`)
 *   **DynamoDB** -> **Azure Cosmos DB** (Use `Microsoft.Azure.Cosmos`)
 *   **SQS** -> **Azure Queue Storage** (Use `Azure.Storage.Queues`)
-
-**Concept Mapping**:
-*   **ILambdaContext** -> **ExecutionContext**
-*   **APIGatewayProxyRequest** -> **HttpRequest**
-*   **APIGatewayProxyResponse** -> **IActionResult** or **HttpResponseData**
-*   **AMI IDs** -> **Azure Image References**
-*   **Instance Types** -> **Azure VM Sizes**
-*   **Spot Instances** -> **Azure Spot VMs** (`Priority = VirtualMachinePriority.Spot`)
 
 **SDK Usage**:
 *   Remove `AWSSDK.*` packages.
 *   Add `Azure.Identity`, `Azure.ResourceManager`, `Azure.ResourceManager.Compute`, etc.
 *   Add `Microsoft.Azure.Functions.Worker` or `Microsoft.NET.Sdk.Functions`
 
-**Conversion Instructions**:
-1. Convert the Lambda function class to an Azure Function class
-2. Replace AWS SDK calls with Azure SDK equivalents
-3. Update method signatures to use Azure Function attributes ([FunctionName], [HttpTrigger], etc.)
-4. Maintain the same file path, namespace, and class name
-5. Keep all business logic in the same file
-6. Add dependency injection if needed (constructor injection)
-
-You must also generate configuration files:
-*   `*.csproj`: Complete project file with Azure Functions SDK
-*   `host.json`: Azure Functions host configuration
-*   `local.settings.json`: Local development settings
-*   `Program.cs`: DI configuration (if using isolated worker model)
-
-Use the `file_writer` tool to write each file to the local file system.
-Do not just output code snippets; write the full file contents.
+**Output**:
+*   Use the `file_writer` tool to write the transformed file content.
+*   Also generate/update configuration files (`*.csproj`, `host.json`, `local.settings.json`) when asked.
 """
     
     @staticmethod
@@ -180,9 +176,9 @@ Do not just output code snippets; write the full file contents.
                     if file.endswith('.csproj'):
                         file_path = os.path.join(root, file)
                         # Skip test project files
-                        if '/test/' in file_path.lower() or '/tests/' in file_path.lower():
-                            logger.info(f"Skipping test project: {file_path}")
-                            continue
+                        # if '/test/' in file_path.lower() or '/tests/' in file_path.lower():
+                        #     logger.info(f"Skipping test project: {file_path}")
+                        #     continue
                         try:
                             with open(file_path, "r") as f:
                                 extra_context += f"\n\nHere is the content of {file}:\n{f.read()}"
@@ -246,10 +242,6 @@ Do not just output code snippets; write the full file contents.
             for file in files:
                 file_path = os.path.join(root, file)
                 if file_path.endswith(file_extension):
-                    # Skip test files
-                    if '/test/' in file_path.lower() or '/tests/' in file_path.lower():
-                        logger.info(f"Skipping test file: {file_path}")
-                        continue
                     
                     # Calculate relative path from input_folder
                     relative_path = os.path.relpath(file_path, input_folder)
@@ -263,14 +255,14 @@ Do not just output code snippets; write the full file contents.
                     upload_path = file_path
                     search_filename = file  # Default to just filename
                     
-                    # Workaround: Azure doesn't support .cs extension, so create a .txt copy
-                    if language == 'csharp':
-                        temp_path = file_path + '.txt'
-                        shutil.copy2(file_path, temp_path)
-                        upload_path = temp_path
-                        temp_files.append(temp_path)
-                        search_filename = file + '.txt'  # Agent should search for .txt version
-                        logger.debug(f"Created temporary file {temp_path} for upload")
+                    # Workaround: Azure doesn't support .cs extension (and potential issues with others), so create a .txt copy for ALL files
+                    # if language == 'csharp':
+                    temp_path = file_path + '.txt'
+                    shutil.copy2(file_path, temp_path)
+                    upload_path = temp_path
+                    temp_files.append(temp_path)
+                    search_filename = file + '.txt'  # Agent should search for .txt version
+                    logger.debug(f"Created temporary file {temp_path} for upload")
                     
                     _file = await client.agents.upload_file_and_poll(
                         file_path=upload_path,

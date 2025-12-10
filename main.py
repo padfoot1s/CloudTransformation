@@ -93,21 +93,12 @@ async def main():
                         Original package: {namespace_or_package if namespace_or_package else 'com.example'}
                         
                         Instructions:
-                        1. Read the content of {search_filename}
-                        2. Convert the AWS Lambda handler to an Azure Function
-                        3. **CRITICAL**: Save the converted file to the EXACT SAME path: `{relative_path}`
-                        4. Keep the same class name: `{base_name}`
-                        5. Preserve the package: `{namespace_or_package if namespace_or_package else 'com.example'}`
-                        6. Convert AWS SDK calls to Azure SDK equivalents:
-                           - EC2 -> Azure Virtual Machines
-                           - S3 -> Azure Blob Storage
-                           - DynamoDB -> Azure Cosmos DB
-                           - SQS -> Azure Queue Storage
-                        7. Update method signature to use Azure Function annotations:
-                           - Add @FunctionName("{base_name}")
-                           - Use @HttpTrigger for HTTP endpoints
-                           - Replace Context with ExecutionContext
-                        8. Keep ALL business logic in the same file
+                        1.  **Read and Analyze**: Read the content of {search_filename}. Determine if it is a Lambda Handler, a Test, or a Utility/Model class.
+                        2.  **Action based on Type**:
+                            *   **Handler**: Convert to Azure Function (@FunctionName). Replacements: Context->ExecutionContext, APIGatewayProxyRequestEvent->HttpRequestMessage, etc.
+                            *   **Test**: Keep as Test. Update mock/assertion libraries to match Azure SDKs.
+                            *   **Utility/Other**: Keep logic. Replace AWS SDK calls with Azure SDK equivalents.
+                        3.  **Path & Preservation**: Save to the EXACT SAME path `{relative_path}` with the same class name and package.
                         
                         Use the file_writer tool to save the converted file to: `{relative_path}`
                         """
@@ -120,24 +111,12 @@ async def main():
                         Original namespace: {namespace_or_package if namespace_or_package else 'MyCompany.AzureFunctions'}
                         
                         Instructions:
-                        1. Read the content of {search_filename} (which contains the code for {filename})
-                        2. Convert the AWS Lambda function to an Azure Function
-                        3. **CRITICAL**: Save the converted file to the EXACT SAME path: `{relative_path}`
-                        4. Keep the same class name: `{base_name}`
-                        5. Preserve the namespace: `{namespace_or_package if namespace_or_package else 'MyCompany.AzureFunctions'}`
-                        6. Convert AWS SDK calls to Azure SDK equivalents:
-                           - EC2 -> Azure Virtual Machines (Azure.ResourceManager.Compute)
-                           - S3 -> Azure Blob Storage (Azure.Storage.Blobs)
-                           - DynamoDB -> Azure Cosmos DB (Microsoft.Azure.Cosmos)
-                           - SQS -> Azure Queue Storage (Azure.Storage.Queues)
-                        7. Update method signature to use Azure Function attributes:
-                           - Add [FunctionName("{base_name}")]
-                           - Use [HttpTrigger] for HTTP endpoints
-                           - Replace ILambdaContext with ExecutionContext
-                           - Replace APIGatewayProxyRequest with HttpRequest
-                           - Replace APIGatewayProxyResponse with IActionResult
-                        8. Keep ALL business logic in the same file
-                        9. Add dependency injection via constructor if needed
+                        1.  **Read and Analyze**: Read the content of {search_filename}. Determine if it is a Lambda Handler, a Test, or a Utility/Model class.
+                        2.  **Action based on Type**:
+                            *   **Handler**: Convert to Azure Function ([FunctionName]). Replacements: ILambdaContext->ExecutionContext, APIGatewayProxyRequest->HttpRequest, etc.
+                            *   **Test**: Keep as Test. Update mock/assertion libraries to match Azure SDKs.
+                            *   **Utility/Other**: Keep logic. Replace AWS SDK calls with Azure SDK equivalents.
+                        3.  **Path & Preservation**: Save to the EXACT SAME path `{relative_path}` with the same class name and namespace.
                         
                         Use the file_writer tool to save the converted file to: `{relative_path}`
                         """
